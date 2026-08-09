@@ -207,7 +207,7 @@ jobs:
       - name: Compile Inno Setup Installer
         shell: pwsh
         run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /O"Release" /DMyAppVersion="${{ env.version }}" /DMyAppArch="x64" /DMyAppSrc="SbiePlus_x64" Installer\Sandboxie-Plus.iss
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /O"Installer\Release" /DMyAppVersion="${{ env.version }}" /DMyAppArch="x64" /DMyAppSrc="SbiePlus_x64" Installer\Sandboxie-Plus.iss
 
       - name: Collect installer assets
         run: Installer\get_assets.cmd
@@ -368,7 +368,7 @@ jobs:
       - name: Compile Inno Setup Installer
         shell: pwsh
         run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /O"Release" /DMyAppVersion="${{ env.version }}" /DMyAppArch="arm64" /DMyAppSrc="SbiePlus_a64" Installer\Sandboxie-Plus.iss
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /O"Installer\Release" /DMyAppVersion="${{ env.version }}" /DMyAppArch="arm64" /DMyAppSrc="SbiePlus_a64" Installer\Sandboxie-Plus.iss
 
       - name: Upload Sandboxie ARM64
         #if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
