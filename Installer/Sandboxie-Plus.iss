@@ -1,4 +1,4 @@
-﻿#define MyAppName "Sandboxie-Plus"
+#define MyAppName "Sandboxie-Plus"
 #include "Languages.iss"
 
 ; Use commandline to populate:
@@ -34,7 +34,9 @@ UsedUserAreasWarning=no
 VersionInfoCopyright=Copyright (C) 2020-{#CurrentYear} by David Xanatos (xanasoft.com)
 VersionInfoVersion={#MyAppVersion}
 SetupIconFile=SandManInstall.ico
+#ifdef UseSignTool
 SignTool=sha256
+#endif
 ; Require windows 10 or later
 ;MinVersion=10.0
 
@@ -84,8 +86,10 @@ Source: ".\Sandboxie-Plus.ini"; DestDir: "{app}"; Flags: ignoreversion onlyifdoe
 
 ; ImDiskTK
 #if MyAppArch == "x64"
+#if FileExists(".\imdisk_files.cab")
 Source: ".\imdisk_files.cab"; DestDir: "{app}"; Flags: ignoreversion
 Source: ".\imdisk_install.bat"; DestDir: "{app}"; Flags: ignoreversion
+#endif
 #endif
 
 [Icons]
@@ -165,7 +169,9 @@ Filename: "{app}\UpdUtil.exe"; Parameters: {code:GetParams}; StatusMsg: "UpdUtil
 
 ; Install ImDisk 3.0 driver
 #if MyAppArch == "x64"
+#if FileExists(".\imdisk_files.cab")
 Filename: "{app}\imdisk_install.bat"; StatusMsg: "Installing ImDisk 3.0 Driver..."; Check: IsInstallImDisk
+#endif
 #endif
 
 ; Start the Sbie service.

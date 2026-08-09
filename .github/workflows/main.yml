@@ -181,6 +181,30 @@ jobs:
       - name: Merging Build
         run: Installer\copy_build.cmd x64 build_qt6
 
+      - name: Extract Sandboxie-Plus version
+        id: get_version
+        shell: pwsh
+        run: |
+          $version_h = Get-Content -Path "SandboxiePlus/version.h"
+          $mjr = ($version_h -match "#define VERSION_MJR\s+(\d+)") ? $Matches[1] : "1"
+          $min = ($version_h -match "#define VERSION_MIN\s+(\d+)") ? $Matches[1] : "0"
+          $rev = ($version_h -match "#define VERSION_REV\s+(\d+)") ? $Matches[1] : "0"
+          $upd = ($version_h -match "#define VERSION_UPD\s+(\d+)") ? $Matches[1] : "0"
+          $version = if ($upd -eq "0") { "$mjr.$min.$rev" } else { "$mjr.$min.$rev.$upd" }
+          echo "version=$version" >> $env:GITHUB_ENV
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Prepare Release Directory
+        shell: pwsh
+        run: |
+          mkdir Installer/Release
+          Move-Item -Path Installer/SbiePlus_x64 -Destination Installer/Release/SbiePlus_x64
+
+      - name: Compile Inno Setup Installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /O"Release" /DMyAppVersion="${{ env.version }}" /DMyAppArch="x64" /DMyAppSrc="SbiePlus_x64" Installer\Sandboxie-Plus.iss
+
       - name: Collect installer assets
         run: Installer\get_assets.cmd
 
@@ -199,7 +223,15 @@ jobs:
         with:
           name: Sandboxie_x64
           path: |
-            Installer/SbiePlus_x64/*
+            Installer/Release/SbiePlus_x64/*
+          retention-days: 60
+
+      - name: Upload Installer exe
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: Installer_x64
+          path: |
+            Installer/Release/Sandboxie-Plus-x64-v*.exe
           retention-days: 60
 
 
@@ -306,11 +338,97 @@ jobs:
       - name: Merging Build
         run: Installer\copy_build.cmd ARM64 build_qt6
 
+      - name: Extract Sandboxie-Plus version
+        id: get_version
+        shell: pwsh
+        run: |
+          $version_h = Get-Content -Path "SandboxiePlus/version.h"
+          $mjr = ($version_h -match "#define VERSION_MJR\s+(\d+)") ? $Matches[1] : "1"
+          $min = ($version_h -match "#define VERSION_MIN\s+(\d+)") ? $Matches[1] : "0"
+          $rev = ($version_h -match "#define VERSION_REV\s+(\d+)") ? $Matches[1] : "0"
+          $upd = ($version_h -match "#define VERSION_UPD\s+(\d+)") ? $Matches[1] : "0"
+          $version = if ($upd -eq "0") { "$mjr.$min.$rev" } else { "$mjr.$min.$rev.$upd" }
+          echo "version=$version" >> $env:GITHUB_ENV
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Prepare Release Directory
+        shell: pwsh
+        run: |
+          mkdir Installer/Release
+          Move-Item -Path Installer/SbiePlus_a64 -Destination Installer/Release/SbiePlus_a64
+
+      - name: Compile Inno Setup Installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /O"Release" /DMyAppVersion="${{ env.version }}" /DMyAppArch="arm64" /DMyAppSrc="SbiePlus_a64" Installer\Sandboxie-Plus.iss
+
       - name: Upload Sandboxie ARM64
         #if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         uses: actions/upload-artifact@v7.0.1
         with:
           name: Sandboxie_ARM64
           path: |
-            Installer/SbiePlus_a64/*
+            Installer/Release/SbiePlus_a64/*
           retention-days: 60
+
+      - name: Upload Installer exe
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: Installer_ARM64
+          path: |
+            Installer/Release/Sandboxie-Plus-arm64-v*.exe
+          retention-days: 60
+
+  Publish_Release:
+    needs: [Build_x64_Qt6, Build_ARM64_Qt6]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Extract Sandboxie-Plus version
+        id: get_version
+        run: |
+          mjr=$(grep -E '#define VERSION_MJR' SandboxiePlus/version.h | awk '{print $3}' | tr -d '\r')
+          min=$(grep -E '#define VERSION_MIN' SandboxiePlus/version.h | awk '{print $3}' | tr -d '\r')
+          rev=$(grep -E '#define VERSION_REV' SandboxiePlus/version.h | awk '{print $3}' | tr -d '\r')
+          upd=$(grep -E '#define VERSION_UPD' SandboxiePlus/version.h | awk '{print $3}' | tr -d '\r')
+          if [ "$upd" -eq "0" ]; then
+            version="$mjr.$min.$rev"
+          else
+            version="$mjr.$min.$rev.$upd"
+          fi
+          echo "version=$version" >> $GITHUB_ENV
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Create release asset directory
+        run: mkdir release-assets
+
+      - name: Download x64 Installer
+        uses: actions/download-artifact@v4
+        with:
+          name: Installer_x64
+          path: release-assets/
+
+      - name: Download ARM64 Installer
+        uses: actions/download-artifact@v4
+        with:
+          name: Installer_ARM64
+          path: release-assets/
+
+      - name: List Release Assets
+        run: ls -la release-assets/
+
+      - name: Publish Release to GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.get_version.outputs.version }}
+          name: Sandboxie-Plus v${{ steps.get_version.outputs.version }}
+          draft: false
+          prerelease: false
+          files: |
+            release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
