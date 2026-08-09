@@ -185,11 +185,15 @@ jobs:
         id: get_version
         shell: pwsh
         run: |
-          $version_h = Get-Content -Path "SandboxiePlus/version.h"
-          $mjr = ($version_h -match "#define VERSION_MJR\s+(\d+)") ? $Matches[1] : "1"
-          $min = ($version_h -match "#define VERSION_MIN\s+(\d+)") ? $Matches[1] : "0"
-          $rev = ($version_h -match "#define VERSION_REV\s+(\d+)") ? $Matches[1] : "0"
-          $upd = ($version_h -match "#define VERSION_UPD\s+(\d+)") ? $Matches[1] : "0"
+          $version_h = Get-Content -Raw -Path "SandboxiePlus/version.h"
+          [void]($version_h -match '#define VERSION_MJR\s+(\d+)')
+          $mjr = $Matches[1]
+          [void]($version_h -match '#define VERSION_MIN\s+(\d+)')
+          $min = $Matches[1]
+          [void]($version_h -match '#define VERSION_REV\s+(\d+)')
+          $rev = $Matches[1]
+          [void]($version_h -match '#define VERSION_UPD\s+(\d+)')
+          $upd = $Matches[1]
           $version = if ($upd -eq "0") { "$mjr.$min.$rev" } else { "$mjr.$min.$rev.$upd" }
           echo "version=$version" >> $env:GITHUB_ENV
           echo "version=$version" >> $env:GITHUB_OUTPUT
@@ -342,11 +346,15 @@ jobs:
         id: get_version
         shell: pwsh
         run: |
-          $version_h = Get-Content -Path "SandboxiePlus/version.h"
-          $mjr = ($version_h -match "#define VERSION_MJR\s+(\d+)") ? $Matches[1] : "1"
-          $min = ($version_h -match "#define VERSION_MIN\s+(\d+)") ? $Matches[1] : "0"
-          $rev = ($version_h -match "#define VERSION_REV\s+(\d+)") ? $Matches[1] : "0"
-          $upd = ($version_h -match "#define VERSION_UPD\s+(\d+)") ? $Matches[1] : "0"
+          $version_h = Get-Content -Raw -Path "SandboxiePlus/version.h"
+          [void]($version_h -match '#define VERSION_MJR\s+(\d+)')
+          $mjr = $Matches[1]
+          [void]($version_h -match '#define VERSION_MIN\s+(\d+)')
+          $min = $Matches[1]
+          [void]($version_h -match '#define VERSION_REV\s+(\d+)')
+          $rev = $Matches[1]
+          [void]($version_h -match '#define VERSION_UPD\s+(\d+)')
+          $upd = $Matches[1]
           $version = if ($upd -eq "0") { "$mjr.$min.$rev" } else { "$mjr.$min.$rev.$upd" }
           echo "version=$version" >> $env:GITHUB_ENV
           echo "version=$version" >> $env:GITHUB_OUTPUT
