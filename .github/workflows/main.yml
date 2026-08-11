@@ -430,7 +430,7 @@ jobs:
         run: ls -la release-assets/
 
       - name: Publish Release to GitHub
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ steps.get_version.outputs.version }}
           name: Sandboxie-Plus v${{ steps.get_version.outputs.version }}
